@@ -196,8 +196,8 @@ function virtualBackend(event) {
         event.source.postMessage(['b2f', 'exportSecret',
                                   'secret_of_id_which_is@AAAA==.ed25519'], '*');
     if (cmd[0] == 'publ:post') {
-        console.log('cmd1 =', cmd)
-        var draft = atob(cmd[2])
+        console.log('cmd1 =', cmd);
+        var draft = atob(cmd[2]);
         // cmd.splice(0,2)
         myseqno += 1;
         var e = { 'header': {
@@ -209,7 +209,24 @@ function virtualBackend(event) {
                 }
         frontEnd.postMessage(['b2f', 'new_event', e], '*')
         broadcast(e);
-    }
+    } 
+    if (cmd[0] == 'customApp:writeEntry') {
+        //read cmd[2]
+        var entry = cmd[2];
+        //convert entry to json
+        entry = JSON.parse(entry);
+        myseqno += 1;
+        //do an entry with CUS, currentMiniAppID, entry
+        var e = { 'header': {
+                'tst': Date.now(),
+                'ref': Math.floor(1000000*Math.random()),
+                'fid': IDs[myname],
+                'seq' : myseqno},
+                  'public': ['CUS', cmd[1], entry]
+        }
+        frontEnd.postMessage(['b2f', 'new_event', e], '*')
+        broadcast(e);
+    } 
     if (cmd[0] == 'priv:post') {
         var draft = atob(cmd[1])
         cmd.splice(0,2)
@@ -265,7 +282,67 @@ function virtualBackend(event) {
                 }
         frontEnd.postMessage(['b2f', 'new_event', e], '*')
         broadcast(e);
+    } else {
+        console.log(cmd);
+        handleRequest(cmd);
     }
 }
+
+function handleRequest(args) {
+    if (!Array.isArray(args) || args.length === 0) {
+        console.error("MiniAppPlugin: handleRequest called with empty args");
+        return;
+    }
+
+    const globalWindow = window.top || window; // Ensure global access
+
+    let retries = 0;
+    let maxRetries = 50; // Max retries (5 seconds)
+
+    function executeRequest() {
+        if (!globalWindow.miniApps) {
+            if (retries >= maxRetries) {
+                console.error("❌ Global MiniApps never initialized. Stopping retries.");
+                return;
+            }
+            console.warn(`⚠ Global MiniApps is not available yet. Retrying in 100ms... (${retries}/${maxRetries})`);
+            retries++;
+            setTimeout(executeRequest, 100);
+            return;
+        }
+
+        let firstArg = args[0];
+
+        if (!firstArg.includes(":")) {
+            let miniAppID = firstArg;
+            let jsonArgs = JSON.stringify({ args: args.slice(1) });
+
+            if (!globalWindow.miniApps[miniAppID] || !globalWindow.miniApps[miniAppID].handleRequest) {
+                console.error(`❌ handleRequest function not found for MiniApp: ${miniAppID}`);
+                return;
+            }
+
+            let response = globalWindow.miniApps[miniAppID].handleRequest(jsonArgs);
+            console.log("✅ Response from", miniAppID, ":", response);
+            return;
+        }
+
+        let [miniAppID, command] = firstArg.split(":", 2);
+        let jsonArgs = JSON.stringify({ args: args.slice(1) });
+        console.log("jssoooon ", jsonArgs);
+
+        if (!globalWindow.miniApps[miniAppID] || !globalWindow.miniApps[miniAppID].handleRequest) {
+            console.error(`❌ handleRequest function not found for MiniApp: ${miniAppID}`);
+            return;
+        }
+
+        let response = globalWindow.miniApps[miniAppID].handleRequest(command, JSON.parse(jsonArgs));
+        console.log("✅ Response from", miniAppID, ":", response);
+    }
+
+    executeRequest();
+}
+
+
 
 // eof

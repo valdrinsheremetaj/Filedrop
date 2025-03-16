@@ -1,0 +1,52 @@
+{
+  "name": "Kanban Boards",
+  "description": "A visual project management tool to organize tasks.",
+  "extension": "False",
+  "extensionText": "",
+  "extensionInit": "",
+  "icon": "miniApps/kanban/assets/kanban.svg",
+  "init": "setKanbanScenario('kanban')",
+  "id": "kanban",
+  "pluginClass": "nz.scuttlebutt.tremolavossbol.miniapps.KanbanPlugin",
+  "cssFile": "/resources/kanban.css",
+  "scripts": [
+    "/src/board.js",
+    "/src/board_ui.js"
+  ],
+  "htmlFile": "/resources/kanban.html",
+  "displayOrNot": [
+    "lst:kanban",
+    "div:board"
+  ],
+  "scenarioDisplay": {
+    "kanban": [
+      "div:back",
+      "core",
+      "lst:kanban",
+      "plus"
+    ],
+    "board": [
+      "div:back",
+      "core",
+      "div:board"
+    ] },
+    "scenario": {
+      "kanban": {
+        "New Kanban board": "menu_new_board",
+        "Invitations": "menu_board_invitations",
+        "Connected Devices": "menu_connection",
+        "Settings": "menu_settings",
+        "About": "menu_about"
+      },
+      "board": {
+        "Add list": "menu_new_column",
+        "Rename Kanban Board": "menu_rename_board",
+        "Invite Users": "menu_invite",
+        "History": "menu_history",
+        "Reload": "reload_curr_board",
+        "Leave": "leave_curr_board",
+        "(un)Forget": "board_toggle_forget",
+        "Debug": "ui_debug"
+      }
+  }
+}

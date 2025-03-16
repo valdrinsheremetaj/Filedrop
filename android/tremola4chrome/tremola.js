@@ -207,8 +207,11 @@ function edit_confirmed() {
 function members_confirmed() {
     if (prev_scenario == 'chats') {
         new_conversation()
-    } else if (prev_scenario == 'kanban') {
-        menu_new_board_name()
+    } else {
+        if (prev_scenario == 'customApp') {
+            backend(currentMiniAppID + ":members_confirmed")
+        }
+        backend(prev_scenario + ":members_confirmed") // AVR
     }
 }
 
@@ -1222,6 +1225,13 @@ function b2f_new_event(e) { // incoming SSB log event: we get map with three ent
                     }
                 }
             }
+
+        } else if (e.public[0] == "CUS") {
+            var customAppID = e.public[1];
+            var customAppData = e.public[2]; // keep it as an object
+            console.log("CUStom event: ", customAppID, customAppData);
+            virtBackEnd.handleRequest([customAppID + ":incoming_notification", customAppData]);
+
 
         }
         persist();

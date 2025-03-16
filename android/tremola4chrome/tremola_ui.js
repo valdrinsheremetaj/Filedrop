@@ -4,25 +4,27 @@
 
 var overlayIsActive = false;
 
+var currentMiniAppID = null; // Keeps track of the active MiniApp
+var miniApps = {}; // Stores dynamically loaded MiniApps
+
 var display_or_not = [
     'div:qr', 'div:back',
     'core', 'lst:chats', 'div:posts', 'lst:contacts', 'lst:members', 'the:connex',
-    'lst:kanban', 'div:footer', 'div:textarea', 'div:confirm-members', 'plus',
-    'div:settings', 'div:board'
+    'div:footer', 'div:textarea', 'div:confirm-members', 'plus',
+    'div:settings', 'lst:miniapps'
 ];
 
 var prev_scenario = 'chats';
 var curr_scenario = 'chats';
 
 var scenarioDisplay = {
-    'chats': ['div:qr', 'core', 'lst:chats', 'div:footer'], // 'plus' TODO reactivate when encrypted chats are implemented
+    'chats': ['div:qr', 'core', 'lst:chats', 'div:footer', 'plus'], //  TODO reactivate when encrypted chats are implemented
     'contacts': ['div:qr', 'core', 'lst:contacts', 'div:footer', 'plus'],
     'posts': ['div:back', 'core', 'div:posts', 'div:textarea'],
     'connex': ['div:qr', 'core', 'the:connex', 'div:footer', 'plus'],
     'members': ['div:back', 'core', 'lst:members', 'div:confirm-members'],
+    'miniapps': ['div:qr', 'core', 'lst:miniapps', 'div:footer'],
     'settings': ['div:back', 'div:settings', 'core'],
-    'kanban': ['div:qr', 'core', 'lst:kanban', 'div:footer', 'plus'],
-    'board': ['div:back', 'core', 'div:board']
 }
 
 var scenarioMenu = {
@@ -61,21 +63,10 @@ var scenarioMenu = {
 
     'settings': [],
 
-    'kanban': [['New Kanban board', 'menu_new_board'],
-        ['Invitations', 'menu_board_invitations'],
-        ['Connected Devices', 'menu_connection'],
-        ['Settings', 'menu_settings'],
-        ['About', 'menu_about']],
-
-    'board': [['Add list', 'menu_new_column'],
-        ['Rename Kanban Board', 'menu_rename_board'],
-        ['Invite Users', 'menu_invite'],
-        ['History', 'menu_history'],
-        ['Reload', 'reload_curr_board'],
-        ['Leave', 'leave_curr_board'],
-        ['(un)Forget', 'board_toggle_forget'],
-        ['Debug', 'ui_debug']]
+    'miniapps': []
 }
+
+//var overlays = [];
 
 const QR_SCAN_TARGET = {
     ADD_CONTACT: 0,
@@ -85,97 +76,155 @@ const QR_SCAN_TARGET = {
 var curr_qr_scan_target = QR_SCAN_TARGET.ADD_CONTACT
 
 function onBackPressed() {
+    console.log('curr_scenario: ' + curr_scenario)
+    console.log('prev_scenario: ' + prev_scenario)
     if (overlayIsActive) {
         closeOverlay();
         return;
     }
-    if (['chats', 'contacts', 'connex', 'board'].indexOf(curr_scenario) >= 0) {
+    console.log("Back button pressed");
+    console.log("Current MiniApp ID:", currentMiniAppID);
+    if (curr_scenario === 'customApp') {
+        console.log("Back button pressed inside MiniApp:", currentMiniAppID);
+        backend(currentMiniAppID + ":onBackPressed"); // Send MiniApp ID to Kotlin
+        return;
+    }
+    if (['chats', 'contacts', 'connex', 'miniapps'].indexOf(curr_scenario) >= 0) {
         if (curr_scenario == 'chats')
             backend("onBackPressed");
-        else if (curr_scenario == 'board')
-            setScenario('kanban')
         else
             setScenario('chats')
     } else {
-        if (curr_scenario == 'settings') {
+        if (curr_scenario == 'posts' && prev_scenario == 'chats') {
+            setScenario('chats');
+        } else if (curr_scenario == 'posts' && prev_scenario == 'miniapps') {
+            setScenario('miniapps');
+        } else if (curr_scenario == 'members') {
+            console.log("prev: " + prev_scenario);
+            setScenario(prev_scenario);
+        } else if (curr_scenario == 'settings') {
             document.getElementById('div:settings').style.display = 'none';
             document.getElementById('core').style.display = null;
             document.getElementById('div:footer').style.display = null;
+            setScenario(prev_scenario);
+        } else {
+            backend("backPressed");
         }
-        setScenario(prev_scenario);
+        //setScenario(prev_scenario);
+
     }
 }
 
 function setScenario(s) {
-    // console.log('setScenario ' + s)
     closeOverlay();
+
+    if (s.startsWith('customApp')) {
+        //check if s contains a :
+        if (s.includes(":")) {
+            //split s by :
+            var split = s.split(":");
+            s = split[0];
+            currentMiniAppID = split[1];
+        }
+        curr_scenario = s;
+    }
+    console.log(curr_scenario);
+
+    if (curr_scenario === 'customApp' && ['chats', 'contacts', 'connex'].indexOf(s) >= 0) {
+        console.log("Leaving MiniApps section");
+        currentMiniAppID = null; // Reset only if exiting the entire miniapps section
+    }
+
+    if (s == 'customApp') {
+        console.log(currentMiniAppID);
+        //remove every display_or_not element except for the ones associated with the current miniApp
+        let filtered = display_or_not.filter(function (element) {
+            return element.startsWith('div:' + currentMiniAppID) || element.startsWith('lst:' + currentMiniAppID) || element.startsWith('the:' + currentMiniAppID);
+        });
+        console.log("display: " + display_or_not);
+
+        display_or_not.forEach(function (d) {
+            let found = false; // Flag to track if a match was found
+            console.log("d: " + d);
+            console.log("scenarioDisplay: " + scenarioDisplay);
+
+            for (let key in scenarioDisplay) {
+                console.log("key: " + key);
+                if (filtered.includes('div:' + key)) {
+                    if (scenarioDisplay[key].includes(d)) {
+                        console.log("found: " + d);
+                        found = true; // Mark as found
+                        break; // Exit inner loop
+                    }
+                }
+            }
+
+            if (!found) {
+                console.log("not found: " + d);
+                document.getElementById(d).style.display = 'none';
+            }
+        });
+
+
+    }
+
     var lst = scenarioDisplay[s];
+    
+    console.log("lst: " + lst);
     if (lst) {
-        // if (s != 'posts' && curr_scenario != "members" && curr_scenario != 'posts') {
-        if (['chats', 'contacts', 'connex', 'kanban'].indexOf(curr_scenario) >= 0) {
+        if (['chats', 'contacts', 'connex', 'miniapps'].indexOf(curr_scenario) >= 0) {
             var cl = document.getElementById('btn:' + curr_scenario).classList;
             cl.toggle('active', false);
             cl.toggle('passive', true);
         }
-        // console.log(' l: ' + lst)
+
+
         display_or_not.forEach(function (d) {
-            // console.log(' l+' + d);
             if (lst.indexOf(d) < 0) {
+                console.log("ddd: " + d);
                 document.getElementById(d).style.display = 'none';
             } else {
                 document.getElementById(d).style.display = null;
-                // console.log(' l=' + d);
             }
-        })
-        // console.log('s: ' + s)
-        if (s != "board") {
-            document.getElementById('tremolaTitle').style.position = null;
-        }
+        });
 
-        if (s == "posts" || s == "settings" || s == "board") {
+        document.getElementById('tremolaTitle').style.position = null;
+
+        if (s == "posts" || s == "settings") {
             document.getElementById('tremolaTitle').style.display = 'none';
             document.getElementById('conversationTitle').style.display = null;
-            // document.getElementById('plus').style.display = 'none';
+            if (s == "posts" && curr_scenario != 'posts') {
+                prev_scenario = curr_scenario;
+            }
         } else {
             document.getElementById('tremolaTitle').style.display = null;
-            // if (s == "connex") { /* document.getElementById('plus').style.display = 'none'; */}
-            // else { /* document.getElementById('plus').style.display = null; */}
             document.getElementById('conversationTitle').style.display = 'none';
         }
+
         if (lst.indexOf('div:qr') >= 0) {
             prev_scenario = s;
         }
+
         curr_scenario = s;
-        if (['chats', 'contacts', 'connex', 'kanban'].indexOf(curr_scenario) >= 0) {
+        if (['chats', 'contacts', 'connex', 'miniapps'].indexOf(curr_scenario) >= 0) {
             var cl = document.getElementById('btn:' + curr_scenario).classList;
             cl.toggle('active', true);
             cl.toggle('passive', false);
         }
-        if (s == 'board')
-            document.getElementById('core').style.height = 'calc(100% - 60px)';
-        else
-            document.getElementById('core').style.height = 'calc(100% - 118px)';
-
-        if (s == 'kanban') {
-            var personalBoardAlreadyExists = false
-            for (var b in tremola.board) {
-                var board = tremola.board[b]
-                if (board.flags.indexOf(FLAG.PERSONAL) >= 0 && board.members.length == 1 && board.members[0] == myId) {
-                    personalBoardAlreadyExists = true
-                    break
-                }
-            }
-            if(!personalBoardAlreadyExists && display_create_personal_board) {
-                menu_create_personal_board()
-            }
-        }
-
+        document.getElementById('core').style.height = 'calc(100% - 118px)';
     }
+
+    console.log('curr_scenario: ' + curr_scenario);
+    console.log('prev_scenario: ' + prev_scenario);
 }
+
 
 function btnBridge(e) {
     var e = e.id, m = '';
-    if (['btn:chats', 'btn:posts', 'btn:contacts', 'btn:connex', 'btn:kanban'].indexOf(e) >= 0) {
+    if (['btn:chats', 'btn:posts', 'btn:contacts', 'btn:connex', /*'btn:kanban',*/ 'btn:miniapps'].indexOf(e) >= 0) {
+        if (e == 'btn:miniapps') {
+            //backend("writeManifestPaths");
+        }
         setScenario(e.substring(4));
     }
     if (e == 'btn:menu') {
@@ -244,17 +293,7 @@ function closeOverlay() {
     document.getElementById('connection-overlay').style.display = 'none';
     document.getElementById('import-id-overlay').style.display = 'none';
 
-    // kanban overlays
-    document.getElementById('div:menu_history').style.display = 'none';
-    document.getElementById('div:item_menu').style.display = 'none';
-    document.getElementById("kanban-invitations-overlay").style.display = 'none';
-    document.getElementById('kanban-create-personal-board-overlay').style.display = 'none';
-    curr_item = null
-    close_board_context_menu()
-    document.getElementById('btn:item_menu_description_save').style.display = 'none'
-    document.getElementById('btn:item_menu_description_cancel').style.display = 'none'
-    document.getElementById('div:debug').style.display = 'none'
-    document.getElementById("div:invite_menu").style.display = 'none'
+    window.eventEmitter.emit('closeOverlay');
 
     overlayIsActive = false;
 
@@ -267,7 +306,7 @@ function closeOverlay() {
 function showPreview() {
     var draft = escapeHTML(document.getElementById('draft').value);
     if (draft.length == 0) return;
-    if (!getSetting("enable_preview")) {
+    if (!getSetting("show_chat_preview")) {
         new_text_post(draft);
         return;
     }
@@ -291,13 +330,21 @@ function menu_about() {
 function plus_button() {
     closeOverlay();
     if (curr_scenario == 'chats') {
-        menu_new_conversation();
+        //menu_new_conversation();
+        launch_snackbar("This feature is currently deactivated!")
     } else if (curr_scenario == 'contacts') {
         menu_new_contact();
     } else if (curr_scenario == 'connex') {
         menu_new_pub();
-    } else if (curr_scenario == 'kanban') {
-        menu_new_board();
+    //} else if (curr_scenario == 'kanban') {
+    //    menu_new_board();
+    } else {
+        console.log(currentMiniAppID);
+        if (currentMiniAppID) {
+            backend(currentMiniAppID + ":plus_button");
+        } else {
+            backend(curr_scenario + ":plus_button");
+        }
     }
 }
 
@@ -558,12 +605,7 @@ function refresh_connection_progressbar(min_entries, old_min_entries, old_want_e
 }
 
 function chat_open_attachments_menu() {
-    // >> DISABLED FOR VIRTBACKEND
-    /*
     closeOverlay()
     document.getElementById('overlay-bg').style.display = 'initial'
     document.getElementById('attach-menu').style.display = 'initial'
-    */
 }
-
-// ---
