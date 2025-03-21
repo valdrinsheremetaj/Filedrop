@@ -25,13 +25,17 @@ function toggle_changed(e) {
 }
 
 function getSetting(nm) {
+    if (document.getElementById(nm) == null) {
+        console.log("setting", nm, "not found")
+        return false
+    }
     return document.getElementById(nm).checked
 }
 
 function applySetting(nm, val) {
     if (nm == 'background_map') {
         if (val)
-            document.body.style.backgroundImage = "url('img/splash-as-background.jpg')";
+            document.body.style.backgroundImage = "url('../assets/splash-as-background.jpg')";
         else
             document.body.style.backgroundImage = null;
     } else if (nm == 'hide_forgotten_conv') {

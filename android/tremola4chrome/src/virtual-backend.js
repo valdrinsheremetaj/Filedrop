@@ -32,7 +32,7 @@ function setup(name) {
 
     var tre = document.createElement("div")
     tre.innerHTML = '<hr>\n' +
-        '<iframe id=tre src="tremola.html?virtualBackend=true" style="width: 100%; height: 600;"></iframe> <hr>\n'
+        '<iframe id=tre src="resources/tremola.html?virtualBackend=true" style="width: 100%; height: 600;"></iframe> <hr>\n'
 
     var vec = document.createElement("p")
     vec.id = 'vec'

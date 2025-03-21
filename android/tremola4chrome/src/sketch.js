@@ -90,7 +90,7 @@ function chat_openSketch() {
     //Color ring addition
     var colorChoiceButton = document.createElement('img');
     colorChoiceButton.id = 'colorChoiceButton';
-    colorChoiceButton.src = 'img/color-wheel.png';
+    colorChoiceButton.src = '../assets/color-wheel.png';
     colorChoiceButton.style.position = 'fixed';
     colorChoiceButton.style.bottom = '10px';
     colorChoiceButton.style.borderRadius = '50%';
@@ -163,7 +163,7 @@ function chat_openSketch() {
     //Add an eraser
     var eraserSign = document.createElement('img');
     eraserSign.id = 'eraserSign';
-    eraserSign.src = 'img/eraser.png';
+    eraserSign.src = '../assets/eraser.png';
     eraserSign.style.position = 'fixed';
     eraserSign.style.bottom = '10px';
     eraserSign.style.right = '10px';

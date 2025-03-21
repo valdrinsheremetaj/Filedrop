@@ -1,42 +1,38 @@
 {
   "name": "Tic Tac Toe",
   "description": "For a quick demo, try out this classic game: Bring three of your marks in a row and you win.",
-  "extension": "False",
-  "extensionText": "",
-  "extensionInit": "",
-  "icon": "miniApps/tictactoe/assets/tic-tac-toe.svg",
+  "icon": "assets/tic-tac-toe.svg",
   "init": "setTTTScenario('tictactoe-list')",
   "id": "tictactoe",
-  "cssFile": "/resources/ttt.css",
+  "cssFile": "resources/ttt.css",
   "scripts": [
-    "/src/ttt.js",
-    "/src/ttt_ui.js"
+    "src/ttt.js",
+    "src/ttt_ui.js"
   ],
-  "htmlFile": "/resources/ttt.html",
-  "displayOrNot": [
-    "div:tictactoe-list",
-    "div:tictactoe-board"
-  ],
-  "scenarioDisplay": {
-    "tictactoe-list": [
-      "div:back",
-      "core",
-      "div:tictactoe-list",
-      "plus"
-    ],
-    "tictactoe-board": [
-      "div:back",
-      "core",
-      "div:tictactoe-board"
-    ] },
-    "scenario": {
+  "htmlFile": "resources/ttt.html",
+  "scenario": {
       "tictactoe-list": {
-        "Settings": "menu_settings",
-        "About": "menu_about"
+          "menu": {
+              "Settings": "menu_settings",
+              "About": "menu_about"
+          },
+          "display": [
+            "div:back",
+            "core",
+            "div:tictactoe-list",
+            "plus"
+          ]
       },
       "tictactoe-board": {
-        "Settings": "menu_settings",
-        "About": "menu_about"
+          "menu": {
+              "Settings": "menu_settings",
+              "About": "menu_about"
+          },
+          "display": [
+            "div:back",
+            "core",
+            "div:tictactoe-board"
+          ]
       }
   }
 }

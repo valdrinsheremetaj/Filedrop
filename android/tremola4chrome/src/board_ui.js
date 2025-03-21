@@ -69,114 +69,8 @@ function dragDrop(ev) {
     }
 }
 
-/**
- * Sets the Kanban-specific scenario, displaying appropriate elements and managing the layout.
- * @param {string} s - The scenario identifier for Kanban.
- */
-function setKanbanScenario(s) {
-    //console.log('HERE', 'INSIDE BUT I DONT WORK')
-    console.log("setKanbanScenario", s);
-    closeOverlay();
-    load_board_list();
-    var lst = scenarioDisplay[s];
-
-    if (curr_scenario == "kanban") {
-        var cl = document.getElementById('btn:' + curr_scenario).classList;
-        cl.toggle('active', false);
-        cl.toggle('passive', true);
-    }
-    console.log("display_or_not:", display_or_not);
-
-    display_or_not.forEach(function (d) {
-        let element = document.getElementById(d);
-        if (element) {
-            if (lst.indexOf(d) < 0) {
-                element.style.display = 'none';
-            } else {
-                element.style.display = null;
-            }
-        } else {
-            console.warn(`Element with ID '${d}' not found.`);
-        }
-    });
-
-    if (s == "board") {
-        document.getElementById('tremolaTitle').style.display = 'none';
-        document.getElementById('conversationTitle').style.display = null;
-    } else {
-        document.getElementById('tremolaTitle').style.display = null;
-        document.getElementById('conversationTitle').style.display = 'none';
-    }
-
-    curr_scenario = s;
-    if (curr_scenario == 'kanban') {
-        var cl = document.getElementById('btn:' + curr_scenario).classList;
-        cl.toggle('active', true);
-        cl.toggle('passive', false);
-    }
-
-    if (s == 'board')
-        document.getElementById('core').style.height = 'calc(100% - 60px)';
-    else
-        document.getElementById('core').style.height = 'calc(100% - 118px)';
-
-    if (s == 'kanban') {
-        var personalBoardAlreadyExists = false
-        for (var b in tremola.board) {
-            var board = tremola.board[b]
-            if (board.flags.indexOf(FLAG.PERSONAL) >= 0 && board.members.length == 1 && board.members[0] == myId) {
-                personalBoardAlreadyExists = true
-                break
-            }
-        }
-        if(!personalBoardAlreadyExists && display_create_personal_board) {
-            menu_create_personal_board()
-        }
-    }
-}
-
-/**
- * Sets the Board-specific scenario, displaying appropriate elements and managing the layout.
- * @param {string} s - The scenario identifier for Board.
- */
-function setBoardScenario(s) {
-    closeOverlay();
-    var lst = scenarioDisplay[s];
-    display_or_not.forEach(function (d) {
-        if (lst.indexOf(d) < 0) {
-            document.getElementById(d).style.display = 'none';
-        } else {
-            document.getElementById(d).style.display = null;
-        }
-    })
-    document.getElementById('tremolaTitle').style.display = 'none';
-    document.getElementById('conversationTitle').style.display = null;
-
-    prev_scenario = curr_scenario;
-    curr_scenario = s;
-    document.getElementById('core').style.height = 'calc(100% - 60px)';
-
-}
-
-/**
- * Event handler to close all overlays using a global event emitter.
- */
-window.eventEmitter.on('closeOverlay', () => {
-    document.getElementById('import-id-overlay').style.display = 'none';
-    document.getElementById('div:menu_history').style.display = 'none';
-    document.getElementById('div:item_menu').style.display = 'none';
-    document.getElementById("kanban-invitations-overlay").style.display = 'none';
-    document.getElementById('kanban-create-personal-board-overlay').style.display = 'none';
-    curr_item = null;
-    close_board_context_menu();
-    document.getElementById('btn:item_menu_description_save').style.display = 'none';
-    document.getElementById('btn:item_menu_description_cancel').style.display = 'none';
-    document.getElementById('div:debug').style.display = 'none';
-    document.getElementById("div:invite_menu").style.display = 'none';
-});
-
 function load_board_list() {
-    document.getElementById('lst:kanban').innerHTML = '';
+    document.getElementById('div:kanban').innerHTML = '';
     if (Object.keys(tremola.board).length === 0)
         return
     var subBoardIds = Object.keys(tremola.board).filter(key => tremola.board[key].subscribed).map(key => ({[key]: tremola.board[key]}))
@@ -194,10 +88,10 @@ function load_board_list() {
             var board = tremola.board[bid]
             var date = new Date(bidTimestamp[i][1])
             date = date.toDateString() + ' ' + date.toTimeString().substring(0, 5);
-            if (board.forgotten && tremola.settings.hide_forgotten_kanbans)
+            if (board.forgotten && tremola.settings.hide_forgotten_boards)
                 continue
             var cl, mem, item, bg, row, badge, badgeId, cnt;
-            cl = document.getElementById('lst:kanban');
+            cl = document.getElementById('div:kanban');
             mem = recps2display(board.members)
             item = document.createElement('div');
             item.setAttribute('style', "padding: 0px 5px 10px 5px; margin: 3px 3px 6px 3px;");
@@ -265,7 +159,7 @@ function load_board(bid) { //switches scene to board and changes title to board 
     title.innerHTML = box;
 
     document.getElementById("div:columns_container").innerHTML = "" //clear old content
-    setBoardScenario('board')//setScenario('board')
+    setScenario('board')
     document.getElementById("tremolaTitle").style.display = 'none';
     document.getElementById("tremolaTitle").style.position = 'fixed';
     title.style.display = null;
@@ -481,8 +375,8 @@ function menu_board_invitation_create_entry(bid) {
     invHTML += "<div style='grid-area: btns;justify-self:end;display: flex;justify-content: center;align-items: center;'>"
     invHTML += "<div style='padding-right:8px;'>"
     //invHTML += "<div style='padding-right:10px;'>"
-    invHTML += "<button class='flat passive buttontext' style=\"height: 40px; background-image: url('img/checked.svg'); width: 35px;margin-right:10px;background-color: var(--passive)\" onclick='btn_invite_accept(\"" + bid + "\")'>&nbsp;</button>"//</div>"
-    invHTML += "<button class='flat passive buttontext' style=\"height: 40px; color: red; background-image: url('img/cancel.svg');width: 35px;background-color: var(--passive)\" onclick='btn_invite_decline(\"" + bid + "\")'>&nbsp;</button>"
+    invHTML += "<button class='flat passive buttontext' style=\"height: 40px; background-image: url('../assets/checked.svg'); width: 35px;margin-right:10px;background-color: var(--passive)\" onclick='btn_invite_accept(\"" + bid + "\")'>&nbsp;</button>"//</div>"
+    invHTML += "<button class='flat passive buttontext' style=\"height: 40px; color: red; background-image: url('../assets/cancel.svg');width: 35px;background-color: var(--passive)\" onclick='btn_invite_decline(\"" + bid + "\")'>&nbsp;</button>"
     invHTML += "</div></div></div>"
 
     document.getElementById("kanban_invitations_list").innerHTML += invHTML
@@ -521,13 +415,9 @@ function menu_new_board() {
     document.getElementById('plus').style.display = 'none';
 }
 
-/**
- * Function called by the backend to initiate the creation of a new board name in a modular way.
- */
+
 function menu_new_board_name() {
-    if (prev_scenario == 'kanban') {
-        menu_edit('new_board', 'Enter the name of the new board', '')
-    }
+    menu_edit('new_board', 'Enter the name of the new board', '')
 }
 
 function menu_rename_board() {
@@ -556,7 +446,7 @@ function board_toggle_forget() {
     persist()
     closeOverlay()
     load_board_list()
-    setKanbanScenario('kanban') //setScenario('kanban')
+    setScenario('kanban')
 }
 
 function menu_invite() {
@@ -621,7 +511,7 @@ function menu_invite_create_entry(id) {
     invHTML += "<div style='grid-area: btns;justify-self:end;display: flex;justify-content: center;align-items: center;'>"
     invHTML += "<div style='padding-right:8px;'>"
     if (!isAlreadyInvited)
-        invHTML += "<button id='invite_btn_" + id + "' class='flat passive buttontext' style=\"height: 40px; color: red; background-image: url('img/send.svg');width: 35px;\" onclick='btn_invite(\"" + id + "\", \"" + curr_board + "\")'>&nbsp;</button>"
+        invHTML += "<button id='invite_btn_" + id + "' class='flat passive buttontext' style=\"height: 40px; color: red; background-image: url('../assets/send.svg');width: 35px;\" onclick='btn_invite(\"" + id + "\", \"" + curr_board + "\")'>&nbsp;</button>"
     invHTML += "</div></div></div>"
 
     document.getElementById("menu_invite_content").innerHTML += invHTML
@@ -642,7 +532,7 @@ function leave_curr_board() {
     }
 
     leave(curr_board)
-    setKanbanScenario('kanban') //setScenario('kanban')
+    setScenario('kanban')
 }
 
 /*

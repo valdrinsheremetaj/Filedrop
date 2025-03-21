@@ -43,7 +43,7 @@ initializeMiniApps();
 
 function initializeMiniApps() {
     console.log("Initializing Mini Apps");
-    let paths = ["miniApps/tictactoe/manifest.json", "miniApps/kanban/manifest.json"];
+    let paths = ["../miniApps/tictactoe/manifest.json", "../miniApps/kanban/manifest.json"];
     //for each path in paths
     paths.forEach(path => {
         //read the manifest file
@@ -65,7 +65,7 @@ function initializeMiniApps() {
 function handleManifestContent(content) {
     setTimeout(() => {
         const manifest = JSON.parse(content);
-        let htmlFile = "miniApps/" + manifest.id + "/" + manifest.htmlFile;
+        let htmlFile = "../miniApps/" + manifest.id + "/" + manifest.htmlFile;
 
         fetch(htmlFile)
             .then(response => response.text())
@@ -87,38 +87,34 @@ function handleManifestContent(content) {
         const miniAppButton = createMiniAppButton(manifest);
         listElement.appendChild(miniAppButton);
 
-        // Extract "displayOrNot" array and convert it to a list
-        const displayOrNotArray = manifest.displayOrNot || [];
-        const displayOrNotList = displayOrNotArray.map(item => String(item));
+        // Extract scenarios from manifest
+        const scenarioData = manifest.scenario || {};
 
+        // Create the displayOrNot list by using each scenario key (assuming the container is "div:" + key)
+        const displayOrNotList = Object.keys(scenarioData).map(key => 'div:' + key);
         console.log("displayOrNotList:", displayOrNotList);
 
-        // Extract "scenarioDisplay" and map it to an object
+        // Prepare maps for scenario display and scenario menu
         const scenarioDisplayMap = {};
-        const scenarioDisplayJson = manifest.scenarioDisplay || {};
-
-        Object.keys(scenarioDisplayJson).forEach(key => {
-            scenarioDisplayMap[key] = scenarioDisplayJson[key].map(item => String(item));
-        });
-
-        console.log("Scenario Display Map:", scenarioDisplayMap);
-
-        // Extract "scenario" and map it to an object of lists of key-value pairs
         const scenarioMenu = {};
-        const scenarioJson = manifest.scenario || {};
 
-        Object.keys(scenarioJson).forEach(key => { // e.g., "kanban", "board"
-            const menuObject = scenarioJson[key];
+        Object.keys(scenarioData).forEach(key => {
+            const entry = scenarioData[key];
+
+            // For scenario display, extract and convert the display array to a list of strings
+            const displayArray = entry.display || [];
+            scenarioDisplayMap[key] = displayArray.map(item => String(item));
+
+            // For scenario menu, convert the menu object to an array of key-value pairs
+            const menuObj = entry.menu || {};
             const menuList = [];
-
-            Object.keys(menuObject).forEach(menuKey => { // e.g., "New Kanban board"
-                const menuValue = menuObject[menuKey];  // e.g., "menu_new_board"
-                menuList.push([menuKey, menuValue]); // Equivalent to Pair<String, String>
+            Object.keys(menuObj).forEach(menuKey => {
+                menuList.push([menuKey, String(menuObj[menuKey])]);
             });
-
             scenarioMenu[key] = menuList;
         });
 
+        console.log("Scenario Display Map:", scenarioDisplayMap);
         console.log("Scenario Menu:", scenarioMenu);
 
         // Execute JavaScript in the WebView
@@ -230,6 +226,11 @@ function createMiniAppButton(manifest) {
     //button.onclick = manifest.init();     // This didn't work as intended
     button.addEventListener('click', () => {
         try {
+
+            if (!manifest.scripts) {
+                console.log("No scripts found in manifest");
+                return;
+            }
             // Dynamically evaluate the init function
             console.log("Init function: " + manifest.init);
             //Set currentMiniAppID to the manifest.id
@@ -245,6 +246,7 @@ function createMiniAppButton(manifest) {
     const icon = document.createElement('img');
     console.log("App Icon: " + manifest.icon);
     icon.src = manifest.icon;
+    icon.src = "../" + "miniApps/" + manifest.id + "/" + manifest.icon;
     icon.alt = `${manifest.name} icon`;
     icon.className = 'miniapp_icon';
     icon.style.width = '50px';
