@@ -62,4 +62,14 @@ The jsonObject payload that the miniApp wants to write into a log is the third l
 
 ### Appendix C: Fields of the manifest.json file
 
-- To be explained
+- “name” \- Name of the miniApp  
+- “description” \- Description of the miniApp  
+- “icon” \- Path to the icon of the miniApp  
+- “init” \- The function that should be called when the miniApp starts  
+- “id” \- The miniApp’s unique identifier  
+- “cssFile” \- Path to the miniApp’s CSS file  
+- “scripts” \- Array of JavaScript files used by the miniApp  
+- “htmlFile” \- Path to the miniApp’s HTML file  
+- “scenario” \- List of scenarios in miniApp (note: each scenario must have a corresponding div in the html file, said div should start with “div:scenarioName”, each scenario includes the following fields:  
+  - “menu” \- How the menu should look like, a JSON dictionary including each menu button and the function it should call  
+  - “display” \- The ids of the different html elements that are meant to be displayed when that scenario is active
