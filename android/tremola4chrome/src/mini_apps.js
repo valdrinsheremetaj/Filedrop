@@ -65,15 +65,31 @@ function initializeMiniApps() {
 function handleManifestContent(content) {
     setTimeout(() => {
         const manifest = JSON.parse(content);
-        let htmlFile = "../miniApps/" + manifest.id + "/" + manifest.htmlFile;
+        let miniAppPath = "../miniApps/" + manifest.id + "/";
 
+        // Load and inject CSS file
+        if (manifest.cssFile) {
+            const cssFilePath = miniAppPath + manifest.cssFile;
+            fetch(cssFilePath)
+                .then(response => response.text())
+                .then(cssContent => {
+                    const styleEl = document.createElement('style');
+                    styleEl.innerText = cssContent;
+                    document.head.appendChild(styleEl);
+                    console.log("CSS content added to document head:", cssFilePath);
+                })
+                .catch(error => console.error("Error loading CSS:", error));
+        }
+
+        // Load and inject HTML file
+        let htmlFile = miniAppPath + manifest.htmlFile;
         fetch(htmlFile)
             .then(response => response.text())
             .then(text => {
                 (function () {
                     var coreDiv = document.getElementById('core');
                     if (coreDiv) {
-                        coreDiv.insertAdjacentHTML("beforeend", text); // ✅ Fix: Keeps existing elements
+                        coreDiv.insertAdjacentHTML("beforeend", text);
                         console.log("HTML content added to core div");
                     } else {
                         console.log("Core div not found");
@@ -81,6 +97,21 @@ function handleManifestContent(content) {
                 })();
             })
             .catch(error => console.error("Error loading HTML:", error));
+        
+        // Load and inject JS files from the "scripts" array
+        const scripts = manifest.scripts || [];
+        scripts.forEach(scriptPath => {
+            let fullScriptPath = miniAppPath + scriptPath;
+            fetch(fullScriptPath)
+                .then(response => response.text())
+                .then(scriptContent => {
+                    const scriptEl = document.createElement('script');
+                    scriptEl.text = scriptContent;
+                    document.body.appendChild(scriptEl);
+                    console.log("JS file loaded and executed:", fullScriptPath);
+                })
+                .catch(error => console.error("Error loading JS:", error));
+        });
 
         // Process the manifest data (e.g., create buttons)
         const listElement = document.getElementById("lst:miniapps");
