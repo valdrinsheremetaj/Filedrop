@@ -14,11 +14,6 @@ if (!window.miniApps) {
     window.miniApps = {}; // Ensure it's defined
 }
 
-console.log("MiniApps Object:", window.miniApps);
-console.log("TicTacToe App:", window.miniApps?.["tictactoe"]);
-console.log("TicTacToe handleRequest:", window.miniApps?.["tictactoe"]?.handleRequest);
-
-
 /**
  * Handles the paths to manifest files.
  *
@@ -42,17 +37,55 @@ function handleManifestPaths(manifestPathsJson) {
 initializeMiniApps();
 
 function initializeMiniApps() {
-    console.log("Initializing Mini Apps");
-    let paths = ["../miniApps/tictactoe/manifest.json", "../miniApps/kanban/manifest.json"];
-    //for each path in paths
-    paths.forEach(path => {
-        //read the manifest file
-        fetch(path)
+    console.log("Initializing Mini Apps using local directory listing");
+
+    const miniAppsUrl = "../miniApps/";
+
+    fetch(miniAppsUrl)
         .then(response => response.text())
-        .then(text => handleManifestContent(text))
-        // outputs the content of the text file
-    });
+        .then(htmlText => {
+            console.log("Directory listing HTML:", htmlText);
+
+            // Use regex to extract folder names from addRow calls.
+            // This regex captures the first string argument of addRow, e.g., "kanban" in addRow("kanban", "kanban", 1, ...)
+            const regex = /addRow\("([^"]+)"\s*,\s*"([^"]+)"\s*,/g;
+            const folderNames = [];
+            let match;
+            while ((match = regex.exec(htmlText)) !== null) {
+                const folderName = match[1];
+                // Exclude "." or ".." if present.
+                if (folderName !== "." && folderName !== "..") {
+                    folderNames.push(folderName);
+                }
+            }
+
+            console.log("Extracted mini app folders:", folderNames);
+
+            // For each extracted folder name, fetch its manifest.json
+            folderNames.forEach(folder => {
+                const manifestPath = `${miniAppsUrl}${folder}/manifest.json`;
+                fetch(manifestPath)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(manifestText => {
+                        handleManifestContent(manifestText);
+                    })
+                    .catch(error => {
+                        console.error(`Error loading manifest for folder ${folder}:`, error);
+                    });
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching miniApps directory listing:", error);
+        });
 }
+
+
+
 
 /**
  * Handles the content of a manifest file.
