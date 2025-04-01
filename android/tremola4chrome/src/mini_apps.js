@@ -14,6 +14,8 @@ if (!window.miniApps) {
     window.miniApps = {}; // Ensure it's defined
 }
 
+let miniAppDirectory = "../miniApps/"; // Default directory for mini apps
+
 /**
  * Handles the paths to manifest files.
  *
@@ -299,6 +301,8 @@ function createMiniAppButton(manifest) {
             console.log("Init function: " + manifest.init);
             //Set currentMiniAppID to the manifest.id
             currentMiniAppID = manifest.id
+            miniAppDirectory = "../miniApps/" + manifest.id + "/";
+            console.log("Mini App Directory: " + miniAppDirectory);
             setScenario("customApp:" + manifest.id);
             console.log(curr_scenario);
             eval(manifest.init);

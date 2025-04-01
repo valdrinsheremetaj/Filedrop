@@ -164,9 +164,9 @@ function ttt_load_board(nm) {
     item.setAttribute('id', 'ttt' + i);
     item.setAttribute('onclick', 'ttt_cellclick(id)');
     if (board[i] == -1)
-        item.innerHTML = "<img src='miniApps/tictactoe/assets/cross.svg' width='100%'>";
+      item.innerHTML = "<img src='" + miniAppDirectory + "assets/cross.svg' width='100%'>";
     else if (board[i] == 1)
-        item.innerHTML = "<img src='miniApps/tictactoe/assets/dot.svg' width='100%'>";
+      item.innerHTML = "<img src='" + miniAppDirectory + "assets/dot.svg' width='100%'>";
     tab.appendChild(item);
   }
   tremola.tictactoe.current = nm;
