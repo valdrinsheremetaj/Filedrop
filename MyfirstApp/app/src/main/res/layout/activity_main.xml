@@ -66,13 +66,11 @@
             android:textColor="#0D47A1"
             android:textStyle="bold" />
 
-        <ImageView
-            android:id="@+id/imageView"
+        <ListView
+            android:id="@+id/deviceList"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="80dp"
-            app:srcCompat="@drawable/banner" />
-
+            android:layout_height="match_parent"
+            android:visibility="visible" />
 
 
     </LinearLayout>
