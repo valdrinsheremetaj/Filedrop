@@ -39,6 +39,7 @@ class PeripheralService : Service() {
         val parameters = (AdvertisingSetParameters.Builder())
             .setLegacyMode(true) // True by default, but set here as a reminder.
             .setConnectable(true)
+            .setScannable(true)
             .setInterval(AdvertisingSetParameters.INTERVAL_HIGH)
             .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
             .build()
@@ -83,10 +84,13 @@ class PeripheralService : Service() {
                 (true).setIncludeTxPowerLevel(true).build()
         )
 
+
         // Wait for onAdvertisingDataSet callback...
         currentAdvertisingSet?.setScanResponseData(
             AdvertiseData.Builder().addServiceUuid(ParcelUuid(UUID.randomUUID())).build()
         )
+
+
 
 
         return START_STICKY
