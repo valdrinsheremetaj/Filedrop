@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+
 
     <application
         android:allowBackup="true"
@@ -19,8 +22,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyfirstApp"
         tools:targetApi="31">
+        <service
+            android:name=".PeripheralService"
+            android:enabled="true"
+            android:exported="true"></service>
 
+        <activity
+            android:name=".peripheralView"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat" >
 
+        </activity>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -31,10 +43,8 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <!-- Mention the service name here -->
-
-        <service android:name=".HelloService"/>
+        </activity> <!-- Mention the service name here -->
+        <service android:name=".HelloService" />
     </application>
 
 </manifest>

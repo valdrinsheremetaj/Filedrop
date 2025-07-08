@@ -1,29 +1,20 @@
 package com.example.myfirstapp
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.ActivityManager
-import android.content.Context
-import android.util.Log
-import android.os.Bundle
-import android.view.View
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.myfirstapp.ui.theme.MyfirstAppTheme
-import android.content.Intent
-import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
-import androidx.activity.ComponentActivity
-import kotlin.Int.Companion.MAX_VALUE
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.view.View
+import android.widget.Button
+import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
@@ -31,13 +22,14 @@ import androidx.core.content.ContextCompat
 
 
 class MainActivity : ComponentActivity(), View.OnClickListener{
-    // declaring objects of Button class
+
+   // declaring objects of Button class
     private var start: Button? = null
     private var stop: Button? = null
 
     private var bleScanner : BluetoothLeScanner? = null
     // 10 second scan
-    private val SCANPERIOD: Long = 60000
+    private val SCANPERIOD: Long = 6000
     private val handler = Handler(Looper.getMainLooper())
     private var scanning = false
     private lateinit var deviceListAdapter: LeDeviceListAdapter
@@ -78,7 +70,8 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         val neededPermissions = arrayOf(
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.BLUETOOTH_PRIVILEGED
         )
 
         ActivityCompat.requestPermissions(this, neededPermissions, 1)
@@ -103,8 +96,8 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         else if (view === stop) {
 
             // stopping the service
-
-            stopService(Intent(this, HelloService::class.java))
+            startActivity(Intent(this@MainActivity, peripheralView::class.java))
+            //stopService(Intent(this, HelloService::class.java))
 
         }
     }
@@ -130,6 +123,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
     private val leScanCallback: ScanCallback = object : ScanCallback() {
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+
             super.onScanResult(callbackType, result)
             val device = result.device
             val name = device.name ?: "Unknown"
