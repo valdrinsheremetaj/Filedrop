@@ -1,4 +1,5 @@
 package com.example.myfirstapp
+import android.Manifest
 import android.view.View
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -7,6 +8,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
 import android.content.Intent
+import android.renderscript.ScriptGroup
+import androidx.core.app.ActivityCompat
 
 
 class peripheralView : AppCompatActivity(), View.OnClickListener {
@@ -32,7 +35,19 @@ class peripheralView : AppCompatActivity(), View.OnClickListener {
         // correctly according to the process
         start!!.setOnClickListener(this)
         stop!!.setOnClickListener(this)
+
+        val neededPermissions = arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.BLUETOOTH_PRIVILEGED,
+            Manifest.permission.BLUETOOTH_ADVERTISE
+        )
+
+        ActivityCompat.requestPermissions(this, neededPermissions, 1)
     }
+
+
 
     override fun onClick(view: View) {
 
@@ -41,6 +56,8 @@ class peripheralView : AppCompatActivity(), View.OnClickListener {
         if (view === start) {
 
             // starting the service
+            var intent = Intent(this, PeripheralService::class.java)
+
             startService(Intent(this, PeripheralService::class.java))
         }
 

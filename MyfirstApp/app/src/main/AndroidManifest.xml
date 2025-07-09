@@ -22,10 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyfirstApp"
         tools:targetApi="31">
-        <service
-            android:name=".PeripheralService"
-            android:enabled="true"
-            android:exported="true"></service>
+
 
         <activity
             android:name=".peripheralView"
@@ -33,6 +30,10 @@
             android:theme="@style/Theme.AppCompat" >
 
         </activity>
+        <service
+            android:name=".PeripheralService"
+            android:enabled="true"
+            android:exported="true"></service>
         <activity
             android:name=".MainActivity"
             android:exported="true"

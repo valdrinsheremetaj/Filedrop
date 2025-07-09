@@ -3,20 +3,20 @@ package com.example.myfirstapp
 import android.Manifest
 import android.app.Service
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertisingSet
+import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.AdvertisingSetCallback
-import android.bluetooth.le.AdvertisingSetParameters
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
-import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
-import java.util.UUID
+import androidx.core.app.ActivityCompat
 
 
 class PeripheralService : Service() {
@@ -26,75 +26,66 @@ class PeripheralService : Service() {
     private lateinit var deviceListAdapter: LeDeviceListAdapter
     private var currentAdvertisingSet : android.bluetooth.le.AdvertisingSet? = null
     private lateinit var callbackVar : AdvertisingSetCallback
+    private lateinit var settings:AdvertiseSettings
+    private lateinit var data: AdvertiseData
 
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_ADVERTISE)
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
-        bleAdvertiser = bluetoothAdapter?.bluetoothLeAdvertiser
+        val bluetoothLeAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return Service.START_STICKY_COMPATIBILITY
+        }
+        bluetoothAdapter.setName("Calculator");
 
-        val parameters = (AdvertisingSetParameters.Builder())
-            .setLegacyMode(true) // True by default, but set here as a reminder.
+        settings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)
             .setConnectable(true)
-            .setScannable(true)
-            .setInterval(AdvertisingSetParameters.INTERVAL_HIGH)
-            .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
+            .setTimeout(0)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_LOW)
             .build()
 
-        val data = (AdvertiseData.Builder()).setIncludeDeviceName(true).build()
+        val data = AdvertiseData.Builder()
+            .setIncludeDeviceName(true)
+            .build()
 
-        val callback: AdvertisingSetCallback = object : AdvertisingSetCallback() {
-            override fun onAdvertisingSetStarted(
-                advertisingSet: AdvertisingSet?,
-                txPower: Int,
-                status: Int
-            ) {
-                Log.i(
-                    "LOG_TAG", ("onAdvertisingSetStarted(): txPower:" + txPower + " , status: "
-                            + status)
-                )
-                currentAdvertisingSet = advertisingSet
+        bleAdvertiser = bluetoothLeAdvertiser;
+
+
+        bleAdvertiser?.startAdvertising(settings, data, object : AdvertiseCallback() {
+            @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+            override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
+                super.onStartSuccess(settingsInEffect)
+                Log.d("TAG", "Advertising started successfully")
+                Log.d("TAG", bluetoothAdapter.name)
             }
 
-            override fun onAdvertisingDataSet(advertisingSet: AdvertisingSet?, status: Int) {
-                Log.i("LOG_TAG", "onAdvertisingDataSet() :status:" + status)
+            override fun onStartFailure(errorCode: Int) {
+                super.onStartFailure(errorCode)
+                Log.e("TAG", "Advertising failed with error code $errorCode")
             }
-
-            override fun onScanResponseDataSet(advertisingSet: AdvertisingSet?, status: Int) {
-                Log.i("LOG_TAG", "onScanResponseDataSet(): status:" + status)
-            }
-
-            override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet?) {
-                Log.i("LOG_TAG", "onAdvertisingSetStopped():")
-            }
-        }
-
-        callbackVar = callback;
-
-        bleAdvertiser?.startAdvertisingSet(parameters, data, null, null, null, callback);
-
-
-        // After onAdvertisingSetStarted callback is called, you can modify the
-        // advertising data and scan response data:
-        currentAdvertisingSet?.setAdvertisingData(
-            AdvertiseData.Builder().setIncludeDeviceName
-                (true).setIncludeTxPowerLevel(true).build()
-        )
-
-
-        // Wait for onAdvertisingDataSet callback...
-        currentAdvertisingSet?.setScanResponseData(
-            AdvertiseData.Builder().addServiceUuid(ParcelUuid(UUID.randomUUID())).build()
-        )
-
+        })
 
 
 
         return START_STICKY
     }
+
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     @RequiresPermission(Manifest.permission.BLUETOOTH_ADVERTISE)
