@@ -1,5 +1,7 @@
 package com.example.myfirstapp
 import android.Manifest
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.view.View
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -7,8 +9,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
+import android.widget.EditText
 import android.content.Intent
 import android.renderscript.ScriptGroup
+import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 
 
@@ -18,6 +22,7 @@ class peripheralView : AppCompatActivity(), View.OnClickListener {
     private var start: Button? = null
     private var stop: Button? = null
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_peripheral_view)
@@ -35,6 +40,19 @@ class peripheralView : AppCompatActivity(), View.OnClickListener {
         // correctly according to the process
         start!!.setOnClickListener(this)
         stop!!.setOnClickListener(this)
+
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothAdapter = bluetoothManager.adapter
+
+
+        //var originalName = bluetoothAdapter.getName();
+        //bluetoothAdapter.setName("FileDrop3000_"+originalName);
+        
+        var nameEditField =  findViewById<View>(R.id.editTextName) as EditText
+        nameEditField.setText(bluetoothAdapter.name)
+
+        var macEditField =  findViewById<View>(R.id.editTextMac) as EditText
+
 
         val neededPermissions = arrayOf(
             Manifest.permission.BLUETOOTH_SCAN,

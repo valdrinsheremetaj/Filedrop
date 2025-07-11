@@ -2,21 +2,26 @@ package com.example.myfirstapp
 
 import android.Manifest
 import android.app.Service
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
+import android.bluetooth.le.AdvertisingSet
 import android.bluetooth.le.AdvertisingSetCallback
+import android.bluetooth.le.AdvertisingSetParameters
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
+import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
+import java.util.UUID
 
 
 class PeripheralService : Service() {
@@ -28,6 +33,8 @@ class PeripheralService : Service() {
     private lateinit var callbackVar : AdvertisingSetCallback
     private lateinit var settings:AdvertiseSettings
     private lateinit var data: AdvertiseData
+
+
 
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_ADVERTISE)
@@ -50,6 +57,7 @@ class PeripheralService : Service() {
             // for ActivityCompat#requestPermissions for more details.
             return Service.START_STICKY_COMPATIBILITY
         }
+        //var originalName = bluetoothAdapter.getName();
         bluetoothAdapter.setName("Calculator");
 
         settings = AdvertiseSettings.Builder()
