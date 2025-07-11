@@ -50,7 +50,7 @@ class LeDeviceListAdapter(private val context: Context) : BaseAdapter() {
         val address = device.address
         nameView.text = "$name\n$address"
         connectButton.setOnClickListener {
-            BLEConnectionManager.connectToDevice(context, device)
+            BLEConnectionManager.connectToDevice(context, device, showDialog = true)
         }
 
         return rowView
