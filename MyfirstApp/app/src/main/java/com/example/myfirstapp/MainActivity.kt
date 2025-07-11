@@ -2,6 +2,8 @@ package com.example.myfirstapp
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityManager
+import com.example.myfirstapp.DeviceListActivity
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
 import android.os.Bundle
@@ -31,17 +33,18 @@ import androidx.core.content.ContextCompat
 
 
 class MainActivity : ComponentActivity(), View.OnClickListener{
+
     // declaring objects of Button class
     private var start: Button? = null
     private var stop: Button? = null
 
     private var bleScanner : BluetoothLeScanner? = null
     // 10 second scan
-    private val SCANPERIOD: Long = 60000
+    private val SCANPERIOD: Long = 20000
     private val handler = Handler(Looper.getMainLooper())
     private var scanning = false
-    private lateinit var deviceListAdapter: LeDeviceListAdapter
-    private lateinit var listView: android.widget.ListView
+    private val scannedDevices = ArrayList<BluetoothDevice>()
+
 
 
 
@@ -71,14 +74,11 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         val bluetoothAdapter = bluetoothManager.adapter
         bleScanner = bluetoothAdapter?.bluetoothLeScanner
 
-        listView = findViewById(R.id.deviceList)
-        deviceListAdapter = LeDeviceListAdapter(this)
-        listView.adapter = deviceListAdapter
-
         val neededPermissions = arrayOf(
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         )
 
         ActivityCompat.requestPermissions(this, neededPermissions, 1)
@@ -93,6 +93,11 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         // process to be performed
         // if start button is clicked
         if (view === start) {
+            Log.d("BLE_SCAN", "BLE Scanner null? ${bleScanner == null}")
+            Log.d("BLE_SCAN", "Has permission? ${hasPermissions()}")
+            Log.d("BLE_SCAN", "Starting scan now...")
+
+            Log.d("BLE_SCAN", "scanLeDevice() started")
             if (hasPermissions()) {
                 scanLeDevice()
             }
@@ -110,13 +115,17 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
     }
     @RequiresPermission(value = "android.permission.BLUETOOTH_SCAN")
     private fun scanLeDevice() {
-        Log.d("BLE_SCAN", "scanLeDevice() started")
 
         if (!scanning) {
+            scannedDevices.clear()
             handler.postDelayed({
                 scanning = false
                 bleScanner?.stopScan(leScanCallback)
                 Log.d("BLE_SCAN", "Stopped scan after $SCANPERIOD ms")
+
+                val intent = Intent(this, DeviceListActivity::class.java)
+                intent.putParcelableArrayListExtra("devices", scannedDevices)
+                startActivity(intent)
             }, SCANPERIOD)
             scanning = true
             bleScanner?.startScan(leScanCallback)
@@ -136,8 +145,9 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
             val address = device.address
 
             Log.d("BLE_SCAN", "Device found: Name=$name, Address=$address")
-            deviceListAdapter.addDevice(result.device)
-            deviceListAdapter.notifyDataSetChanged()
+            if (!scannedDevices.contains(device)) {
+                scannedDevices.add(device)
+            }
         }
     }
     @RequiresApi(Build.VERSION_CODES.S)

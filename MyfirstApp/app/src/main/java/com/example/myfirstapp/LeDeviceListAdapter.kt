@@ -1,16 +1,21 @@
 package com.example.myfirstapp
 
 import android.Manifest
-import android.R
+import android.annotation.SuppressLint
+import com.example.myfirstapp.R
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.TextView
 import androidx.annotation.RequiresPermission
+import android.view.LayoutInflater
+import android.widget.Button
 
-class LeDeviceListAdapter(context: Context) : ArrayAdapter<BluetoothDevice>(context, android.R.layout.simple_list_item_2) {
+
+class LeDeviceListAdapter(private val context: Context) : BaseAdapter() {
     private val devices = mutableListOf<BluetoothDevice>()
 
     fun addDevice(device: BluetoothDevice) {
@@ -27,19 +32,27 @@ class LeDeviceListAdapter(context: Context) : ArrayAdapter<BluetoothDevice>(cont
 
     override fun getCount(): Int = devices.size
 
-    override fun getItem(position: Int): BluetoothDevice? = devices[position]
+    override fun getItem(position: Int): BluetoothDevice = devices[position]
+    override fun getItemId(position: Int): Long {
+        TODO("Not yet implemented")
+    }
 
+    @SuppressLint("ViewHolder")
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        val view = convertView ?: View.inflate(context, R.layout.simple_list_item_2, null)
         val device = devices[position]
+        val rowView = LayoutInflater.from(context).inflate(R.layout.device_list_item, parent, false)
 
-        val nameView = view.findViewById<TextView>(R.id.text1)
-        val addressView = view.findViewById<TextView>(R.id.text2)
+        val nameView = rowView.findViewById<TextView>(R.id.deviceName)
+        val connectButton = rowView.findViewById<Button>(R.id.connectButton)
 
-        nameView.text = device.name ?: "Unknown Device"
-        addressView.text = device.address
+        val name = device.name ?: "Unknown"
+        val address = device.address
+        nameView.text = "$name\n$address"
+        connectButton.setOnClickListener {
+            BLEConnectionManager.connectToDevice(context, device)
+        }
 
-        return view
+        return rowView
     }
 }

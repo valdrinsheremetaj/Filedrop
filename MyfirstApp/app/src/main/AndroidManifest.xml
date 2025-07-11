@@ -32,6 +32,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".DeviceListActivity" />
+
         <!-- Mention the service name here -->
 
         <service android:name=".HelloService"/>

@@ -44,7 +44,7 @@
             android:layout_marginBottom="20dp"
             android:background="#4CAF50"
 
-            android:text="@string/startButtonText"
+            android:text="@string/scan_for_peripherals"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textColor="#0D47A1"
@@ -60,18 +60,11 @@
             android:layout_marginBottom="20dp"
             android:background="#4CAF50"
 
-            android:text="@string/stopButtonText"
+            android:text="@string/advertise"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textColor="#0D47A1"
             android:textStyle="bold" />
-
-        <ListView
-            android:id="@+id/deviceList"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="visible" />
-
 
     </LinearLayout>
 
