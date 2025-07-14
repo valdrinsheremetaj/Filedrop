@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
    // declaring objects of Button class
     private var start: Button? = null
     private var stop: Button? = null
+    private var wifiButton: Button? = null
 
     private var bleScanner : BluetoothLeScanner? = null
     // 10 second scan
@@ -52,11 +53,14 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         // to the object stop
         stop = findViewById<View>(R.id.stopButton) as Button
 
+        wifiButton = findViewById<View>(R.id.showWIFI) as Button
+
         // declaring listeners for the
         // buttons to make them respond
         // correctly according to the process
         start!!.setOnClickListener(this)
         stop!!.setOnClickListener(this)
+        wifiButton!!.setOnClickListener(this)
 
 
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager
@@ -71,7 +75,11 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_CONNECT,
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BLUETOOTH_PRIVILEGED
+            Manifest.permission.BLUETOOTH_PRIVILEGED,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.CHANGE_WIFI_STATE,
+           
         )
 
         ActivityCompat.requestPermissions(this, neededPermissions, 1)
@@ -97,6 +105,15 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
 
             // stopping the service
             startActivity(Intent(this@MainActivity, peripheralView::class.java))
+            //stopService(Intent(this, HelloService::class.java))
+
+        }
+        // process to be performed
+        // if stop button is clicked
+        else if (view === wifiButton) {
+
+            // stopping the service
+            startActivity(Intent(this@MainActivity, WIFINetListActivity::class.java))
             //stopService(Intent(this, HelloService::class.java))
 
         }

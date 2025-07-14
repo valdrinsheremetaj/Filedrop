@@ -68,10 +68,12 @@ class PeripheralService : Service() {
             .build()
 
         val data = AdvertiseData.Builder()
+            //.addServiceUuid(ParcelUuid(UUID.fromString(getString(R.string.ble_uuid))))
             .setIncludeDeviceName(true)
             .build()
 
         bleAdvertiser = bluetoothLeAdvertiser;
+
 
 
         bleAdvertiser?.startAdvertising(settings, data, object : AdvertiseCallback() {
@@ -86,6 +88,8 @@ class PeripheralService : Service() {
                 super.onStartFailure(errorCode)
                 Log.e("TAG", "Advertising failed with error code $errorCode")
             }
+
+
         })
 
 
