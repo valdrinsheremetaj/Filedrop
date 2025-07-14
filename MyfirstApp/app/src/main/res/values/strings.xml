@@ -1,10 +1,12 @@
 <resources>
     <string name="app_name">MyfirstApp</string>
-    <string name="increment_by_one">INCREMENT BY ONE</string>
-    <string name="number_zero">0</string>
+    <string name = "increment_by_one">INCREMENT BY ONE</string>
+    <string name = "number_zero">0</string>
     <string name="heading">Services In Android</string>
     <string name="headingPeripheral">Peripheral Functionality</string>
     <string name="startButtonText">Start the Service</string>
     <string name="stopButtonText">Stop the Service</string>
     <string name="Receive">Receive</string>
+    <string name="advertise">Advertise</string>
+    <string name="scan_for_peripherals">Scan for peripherals</string>
 </resources>

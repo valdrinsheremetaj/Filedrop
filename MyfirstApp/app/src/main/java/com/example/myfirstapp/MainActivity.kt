@@ -22,15 +22,14 @@ import androidx.core.content.ContextCompat
 
 
 class MainActivity : ComponentActivity(), View.OnClickListener{
-
-   // declaring objects of Button class
+    // declaring objects of Button class
     private var start: Button? = null
     private var stop: Button? = null
     private var wifiButton: Button? = null
 
     private var bleScanner : BluetoothLeScanner? = null
     // 10 second scan
-    private val SCANPERIOD: Long = 6000
+    private val SCANPERIOD: Long = 60000
     private val handler = Handler(Looper.getMainLooper())
     private var scanning = false
     private lateinit var deviceListAdapter: LeDeviceListAdapter
@@ -75,11 +74,11 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_CONNECT,
             Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.BLUETOOTH_PRIVILEGED,
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.INTERNET,
             Manifest.permission.CHANGE_WIFI_STATE,
-           
         )
 
         ActivityCompat.requestPermissions(this, neededPermissions, 1)
@@ -94,6 +93,11 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         // process to be performed
         // if start button is clicked
         if (view === start) {
+            Log.d("BLE_SCAN", "BLE Scanner null? ${bleScanner == null}")
+            Log.d("BLE_SCAN", "Has permission? ${hasPermissions()}")
+            Log.d("BLE_SCAN", "Starting scan now...")
+
+            Log.d("BLE_SCAN", "scanLeDevice() started")
             if (hasPermissions()) {
                 scanLeDevice()
             }
@@ -104,8 +108,8 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         else if (view === stop) {
 
             // stopping the service
+
             startActivity(Intent(this@MainActivity, peripheralView::class.java))
-            //stopService(Intent(this, HelloService::class.java))
 
         }
         // process to be performed
@@ -140,7 +144,6 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
     private val leScanCallback: ScanCallback = object : ScanCallback() {
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-
             super.onScanResult(callbackType, result)
             val device = result.device
             val name = device.name ?: "Unknown"

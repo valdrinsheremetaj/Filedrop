@@ -33,7 +33,6 @@
             android:textColor="@android:color/holo_green_dark"
             android:textSize="36sp"
             android:textStyle="bold" />
-
         <Button
             android:id="@+id/showWIFI"
             android:layout_width="match_parent"
@@ -76,7 +75,7 @@
             android:layout_marginBottom="20dp"
             android:background="#4CAF50"
 
-            android:text="@string/Receive"
+            android:text="@string/advertise"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textColor="#0D47A1"
