@@ -1,90 +1,124 @@
 package com.example.myfirstapp
+
 import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.view.View
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.net.wifi.p2p.WifiP2pManager
+import android.os.Build
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.content.Intent
-import android.renderscript.ScriptGroup
+import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-
+import androidx.core.content.ContextCompat
 
 class peripheralView : AppCompatActivity(), View.OnClickListener {
 
-    // declaring objects of Button class
     private var start: Button? = null
     private var stop: Button? = null
+    private lateinit var wifiP2pManager: WifiP2pManager
+    private lateinit var wifiChannel: WifiP2pManager.Channel
+    private lateinit var wifiReceiver: WifiDirectBroadcastReceiver
+    private lateinit var wifiIntentFilter: IntentFilter
 
-    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_peripheral_view)
 
-        // assigning ID of startButton
-        // to the object start
-        start = findViewById<View>(R.id.startButton) as Button
-
-        // assigning ID of stopButton
-        // to the object stop
-        stop = findViewById<View>(R.id.stopButton) as Button
-
-        // declaring listeners for the
-        // buttons to make them respond
-        // correctly according to the process
+        start = findViewById(R.id.startButton)
+        stop = findViewById(R.id.stopButton)
         start!!.setOnClickListener(this)
         stop!!.setOnClickListener(this)
 
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
 
+        val nameEditField = findViewById<EditText>(R.id.editTextName)
 
-        //var originalName = bluetoothAdapter.getName();
-        //bluetoothAdapter.setName("FileDrop3000_"+originalName);
-        
-        var nameEditField =  findViewById<View>(R.id.editTextName) as EditText
-        nameEditField.setText(bluetoothAdapter.name)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            nameEditField.setText(bluetoothAdapter.name)
+        } else {
+            nameEditField.setText("Unknown")
+        }
 
-        var macEditField =  findViewById<View>(R.id.editTextMac) as EditText
+        val macEditField = findViewById<EditText>(R.id.editTextMac)
+
+        // Wifi-Direct setup, to make sure device is also advertising via Wifi-Direct
+        wifiP2pManager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+        wifiChannel = wifiP2pManager.initialize(this, mainLooper, null)
+        WifiDirectManager.initialize(wifiP2pManager, wifiChannel, this)
 
 
-        val neededPermissions = arrayOf(
-            Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BLUETOOTH_PRIVILEGED,
-            Manifest.permission.BLUETOOTH_ADVERTISE
-        )
+        wifiIntentFilter = IntentFilter().apply {
+            addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
+        }
 
-        ActivityCompat.requestPermissions(this, neededPermissions, 1)
+        wifiReceiver = WifiDirectBroadcastReceiver(wifiP2pManager, wifiChannel, this)
+        registerReceiver(wifiReceiver, wifiIntentFilter)
+
+        if (!hasPermissions()) {
+            ActivityCompat.requestPermissions(this, getPermissionsForThisDevice(), 1)
+            return
+        }
     }
 
 
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
+    private fun startWifiDirectDiscovery() {
+        wifiP2pManager.discoverPeers(wifiChannel, object : WifiP2pManager.ActionListener {
+            @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
+            override fun onSuccess() {
+                Log.d("WIFI_DIRECT", "Started Wi-Fi Direct advertisement")
+            }
 
+            override fun onFailure(reason: Int) {
+                Log.e("WIFI_DIRECT", "Advertisement failed: $reason")
+            }
+        })
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     override fun onClick(view: View) {
-
-        // process to be performed
-        // if start button is clicked
         if (view === start) {
-
-            // starting the service
-            var intent = Intent(this, PeripheralService::class.java)
-
             startService(Intent(this, PeripheralService::class.java))
-        }
-
-        // process to be performed
-        // if stop button is clicked
-        else if (view === stop) {
-
-            // stopping the service
+            startWifiDirectDiscovery()
+        } else if (view === stop) {
             stopService(Intent(this, PeripheralService::class.java))
+        }
+    }
+    private fun hasPermissions(): Boolean {
+        return getPermissionsForThisDevice().all {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    fun getPermissionsForThisDevice(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.NEARBY_WIFI_DEVICES,
+                Manifest.permission.BLUETOOTH_PRIVILEGED,
+                Manifest.permission.BLUETOOTH_ADVERTISE
+            )
+        } else {
+            // this could be used for older devices
+            arrayOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
         }
     }
 }

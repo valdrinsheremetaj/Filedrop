@@ -15,10 +15,14 @@ import androidx.annotation.RequiresPermission
 object BLEConnectionManager {
 
     private var bluetoothGatt: BluetoothGatt? = null
-    private var connectedDevice: BluetoothDevice? = null
+    internal var connectedDevice: BluetoothDevice? = null
 
     private var appContext: Context? = null
     private var showTestDialog: Boolean = false
+
+    // flag for other functions
+    var onConnected: (() -> Unit)? = null
+    var connectedBLEName: String? = null
 
     private val bluetoothGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
@@ -26,19 +30,9 @@ object BLEConnectionManager {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i("BLE", "Connected to ${gatt.device.address}")
                 connectedDevice = gatt.device
+                connectedBLEName = connectedDevice?.name
                 gatt.discoverServices()
-
-                if (showTestDialog) {
-                    appContext?.let { context ->
-                        Handler(Looper.getMainLooper()).post {
-                            AlertDialog.Builder(context)
-                                .setTitle("BLE Connection")
-                                .setMessage("Connected to ${gatt.device.name ?: gatt.device.address}")
-                                .setPositiveButton("OK", null)
-                                .show()
-                        }
-                    }
-                }
+                onConnected?.invoke()
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i("BLE", "Disconnected from ${gatt.device.address}")

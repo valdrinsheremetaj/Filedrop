@@ -34,7 +34,7 @@ class LeDeviceListAdapter(private val context: Context) : BaseAdapter() {
 
     override fun getItem(position: Int): BluetoothDevice = devices[position]
     override fun getItemId(position: Int): Long {
-        TODO("Not yet implemented")
+        return position.toLong()
     }
 
     @SuppressLint("ViewHolder")

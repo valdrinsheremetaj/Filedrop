@@ -49,9 +49,11 @@ class WifiNetworkList(private val context: Context) : BaseAdapter() {
         val rowView = LayoutInflater.from(context).inflate(R.layout.wifi_list_item, parent, false)
 
 
-
-
-        val name = device.getWifiSsid().toString()?: "Unknown"
+        val name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            device.wifiSsid?.toString() ?: "Unknown"
+        } else {
+            device.SSID ?: "Unknown"
+        }
 
         rowView.findViewById<TextView>(R.id.wifiName).text = "$name"
 
