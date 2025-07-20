@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
 
         //wifiButton = findViewById<View>(R.id.showWIFI) as Button
 
-        wifiDirectButton = findViewById<View>(R.id.wifiDirectButton) as Button
+        //wifiDirectButton = findViewById<View>(R.id.wifiDirectButton) as Button
 
         // declaring listeners for the
         // buttons to make them respond
@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         start!!.setOnClickListener(this)
         stop!!.setOnClickListener(this)
         //wifiButton!!.setOnClickListener(this)
-        wifiDirectButton.setOnClickListener(this)
+        //wifiDirectButton.setOnClickListener(this)
 
 
         wifiP2pManager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
@@ -140,65 +140,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
             //stopService(Intent(this, HelloService::class.java))
 
             // just used for faster Wifi Direct testing
-        else if (view === wifiDirectButton) {
-            if (!hasPermissions()) {
-                Log.e("WIFI_DIRECT", "Missing Wi-Fi Direct permissions")
-                return
-            }
 
-            val manager = getSystemService(WIFI_P2P_SERVICE) as WifiP2pManager
-            val channel = manager.initialize(this, mainLooper, null)
-            WifiDirectManager.initialize(manager, channel, this)
-            WifiDirectManager.registerReceiver(this)
-
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.NEARBY_WIFI_DEVICES
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return
-            }
-            WifiDirectManager.discoverPeers(
-                context = this,
-                onSuccess = {
-                    Log.d("WIFI_DIRECT", "Peers discovered. Connecting to first available peer...")
-
-                    val peer = WifiDirectManager.peerList.firstOrNull()
-                    if (peer != null) {
-                        WifiDirectManager.connectToPeer(
-                            peer,
-                            onSuccess = {
-                                Log.d("WIFI_DIRECT", "Connected to ${peer.deviceName}, opening file picker")
-
-                                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                                    type = "*/*"
-                                    addCategory(Intent.CATEGORY_OPENABLE)
-                                }
-                                startActivityForResult(Intent.createChooser(intent, "Select File"), 1234)
-                            },
-                            onFailure = { reason ->
-                                Log.e("WIFI_DIRECT", "Connection failed: $reason")
-                            }
-                        )
-                    } else {
-                        Log.w("WIFI_DIRECT", "No peers found.")
-                    }
-                },
-                onFailure = { reason ->
-                    Log.e("WIFI_DIRECT", "Peer discovery failed: $reason")
-                }
-            )
-        }
 
     }
 
