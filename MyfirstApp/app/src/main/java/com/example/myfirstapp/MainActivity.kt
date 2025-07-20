@@ -139,8 +139,18 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
             startActivity(Intent(this@MainActivity, WIFINetListActivity::class.java))
             //stopService(Intent(this, HelloService::class.java))
 
-        // just used for faster Wifi Direct testing
+            // just used for faster Wifi Direct testing
         } else if (view === wifiDirectButton) {
+            if (!hasPermissions()) {
+                Log.e("WIFI_DIRECT", "Missing Wi-Fi Direct permissions")
+                return
+            }
+
+            val manager = getSystemService(WIFI_P2P_SERVICE) as WifiP2pManager
+            val channel = manager.initialize(this, mainLooper, null)
+            WifiDirectManager.initialize(manager, channel, this)
+            WifiDirectManager.registerReceiver(this)
+
             if (ActivityCompat.checkSelfPermission(
                     this,
                     Manifest.permission.ACCESS_FINE_LOCATION
@@ -149,30 +159,47 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
                     Manifest.permission.NEARBY_WIFI_DEVICES
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                Log.e("WIFI_DIRECT", "Missing permissions for Wi-Fi Direct")
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
                 return
             }
-
-            val manager = getSystemService(WIFI_P2P_SERVICE) as WifiP2pManager
-            val channel = manager.initialize(this, mainLooper, null)
-            WifiDirectManager.initialize(manager, channel, this)
-            WifiDirectManager.registerReceiver(this)
             WifiDirectManager.discoverPeers(
                 context = this,
                 onSuccess = {
-                    Log.d("WIFI_DIRECT", "Connected to peer, starting file picker")
+                    Log.d("WIFI_DIRECT", "Peers discovered. Connecting to first available peer...")
 
-                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                        type = "*/*"
-                        addCategory(Intent.CATEGORY_OPENABLE)
+                    val peer = WifiDirectManager.peerList.firstOrNull()
+                    if (peer != null) {
+                        WifiDirectManager.connectToPeer(
+                            peer,
+                            onSuccess = {
+                                Log.d("WIFI_DIRECT", "Connected to ${peer.deviceName}, opening file picker")
+
+                                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                    type = "*/*"
+                                    addCategory(Intent.CATEGORY_OPENABLE)
+                                }
+                                startActivityForResult(Intent.createChooser(intent, "Select File"), 1234)
+                            },
+                            onFailure = { reason ->
+                                Log.e("WIFI_DIRECT", "Connection failed: $reason")
+                            }
+                        )
+                    } else {
+                        Log.w("WIFI_DIRECT", "No peers found.")
                     }
-                    startActivityForResult(Intent.createChooser(intent, "Select File"), 1234)
                 },
                 onFailure = { reason ->
-                    Log.e("WIFI_DIRECT", "Failed to connect: $reason")
+                    Log.e("WIFI_DIRECT", "Peer discovery failed: $reason")
                 }
             )
         }
+
     }
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_SCAN")
@@ -246,6 +273,39 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
     override fun onPause() {
         super.onPause()
         unregisterReceiver(receiver)
+    }
+
+    @Deprecated("Use ActivityResult API instead if needed.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 1234 && resultCode == RESULT_OK) {
+            val fileUri = data?.data
+            if (fileUri == null) {
+                Log.e("FILE_PICKER", "No file selected")
+                return
+            }
+
+            val info = WifiDirectManager.connectionInfo
+            Log.d("FILE_SENDER", "connectionInfo = $info")
+            if (info == null || !info.groupFormed) {
+                Log.e("FILE_SENDER", "Wi-Fi Direct not connected or no group owner")
+                return
+            }
+
+            val hostAddress = info.groupOwnerAddress.hostAddress
+            val port = 8888
+
+            val serviceIntent = Intent(this, FileTransferService::class.java).apply {
+                action = FileTransferService.ACTION_SEND_FILE
+                putExtra(FileTransferService.EXTRAS_FILE_PATH, fileUri.toString())
+                putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, hostAddress)
+                putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, port)
+            }
+
+            Log.d("FILE_SENDER", "Sending file to $hostAddress:$port → $fileUri")
+            startService(serviceIntent)
+        }
     }
 
 

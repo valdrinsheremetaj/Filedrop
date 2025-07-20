@@ -58,7 +58,7 @@ class PeripheralService : Service() {
             return Service.START_STICKY_COMPATIBILITY
         }
         //var originalName = bluetoothAdapter.getName();
-        bluetoothAdapter.setName("Calculator");
+        bluetoothAdapter.setName("Galaxy A53 5G");
 
         settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)

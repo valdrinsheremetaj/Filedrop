@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -75,23 +77,52 @@ class peripheralView : AppCompatActivity(), View.OnClickListener {
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     private fun startWifiDirectDiscovery() {
-        wifiP2pManager.discoverPeers(wifiChannel, object : WifiP2pManager.ActionListener {
-            @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
+        WifiDirectManager.manager.requestGroupInfo(WifiDirectManager.channel) { group ->
+            if (group != null) {
+                Log.d("WIFI_DIRECT", "Group already exists, removing first...")
+                WifiDirectManager.manager.removeGroup(WifiDirectManager.channel, object : WifiP2pManager.ActionListener {
+                    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
+                    override fun onSuccess() {
+                        Log.d("WIFI_DIRECT", "Group removed, waiting before creating new group...")
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            createWifiDirectGroup()
+                        }, 1000)
+                    }
+
+
+                    override fun onFailure(reason: Int) {
+                        Log.e("WIFI_DIRECT", "Failed to remove existing group: $reason")
+                    }
+                })
+            } else {
+                createWifiDirectGroup()
+            }
+        }
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
+    private fun createWifiDirectGroup() {
+        WifiDirectManager.manager.createGroup(WifiDirectManager.channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                Log.d("WIFI_DIRECT", "Started Wi-Fi Direct advertisement")
+                Log.d("WIFI_DIRECT", "Group created successfully!")
             }
 
             override fun onFailure(reason: Int) {
-                Log.e("WIFI_DIRECT", "Advertisement failed: $reason")
+                Log.e("WIFI_DIRECT", "Group creation failed: $reason")
             }
         })
     }
+
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     override fun onClick(view: View) {
         if (view === start) {
             startService(Intent(this, PeripheralService::class.java))
             startWifiDirectDiscovery()
+            val receiveIntent = Intent(this, FileTransferService::class.java).apply {
+                action = FileTransferService.ACTION_RECEIVE_FILE
+            }
+            startService(receiveIntent)
         } else if (view === stop) {
             stopService(Intent(this, PeripheralService::class.java))
         }

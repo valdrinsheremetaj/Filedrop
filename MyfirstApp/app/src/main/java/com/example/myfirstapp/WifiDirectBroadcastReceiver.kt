@@ -16,6 +16,7 @@ class WifiDirectBroadcastReceiver(
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d("WIFI_DIRECT", "Received intent: ${intent.action}")
         when (intent.action) {
             // Check to see if Wi-Fi is enabled and notify appropriate activity
             WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
@@ -33,6 +34,22 @@ class WifiDirectBroadcastReceiver(
                     }
                 }
             }
+            WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
+                Log.d("WIFI_DIRECT", "Handling CONNECTION_CHANGED_ACTION")
+                val networkInfo = intent.getParcelableExtra<android.net.NetworkInfo>(WifiP2pManager.EXTRA_NETWORK_INFO)
+                if (networkInfo != null && networkInfo.isConnected) {
+                    // request connection info to get group owner IP
+                    manager.requestConnectionInfo(channel) { info ->
+                        Log.d("WIFI_DIRECT", "ConnectionInfo available. GroupOwner: ${info.groupOwnerAddress}")
+                        WifiDirectManager.connectionInfo = info
+                    }
+                } else {
+                    Log.d("WIFI_DIRECT", "Disconnected from Wi-Fi P2P group")
+                    WifiDirectManager.connectionInfo = null
+                }
+            }
+
+
         }
     }
 }

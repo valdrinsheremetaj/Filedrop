@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
+import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pInfo
@@ -103,6 +104,8 @@ object WifiDirectManager {
         // connect via mac address by using WifiP2pConfig
         val config = WifiP2pConfig().apply {
             deviceAddress = device.deviceAddress
+            groupOwnerIntent = 0
+            wps.setup = WpsInfo.PBC
         }
 
         manager.connect(channel, config, object : WifiP2pManager.ActionListener {
@@ -120,12 +123,7 @@ object WifiDirectManager {
 
     // listen for events
     fun registerReceiver(context: Context) {
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            intentFilter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+        context.registerReceiver(receiver, intentFilter)
     }
 
     // stop listening
