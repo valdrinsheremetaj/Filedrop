@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         // to the object stop
         stop = findViewById<View>(R.id.stopButton) as Button
 
-        wifiButton = findViewById<View>(R.id.showWIFI) as Button
+        //wifiButton = findViewById<View>(R.id.showWIFI) as Button
 
         wifiDirectButton = findViewById<View>(R.id.wifiDirectButton) as Button
 
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         // correctly according to the process
         start!!.setOnClickListener(this)
         stop!!.setOnClickListener(this)
-        wifiButton!!.setOnClickListener(this)
+        //wifiButton!!.setOnClickListener(this)
         wifiDirectButton.setOnClickListener(this)
 
 
@@ -132,15 +132,15 @@ class MainActivity : ComponentActivity(), View.OnClickListener{
         }
         // process to be performed
         // if stop button is clicked
-        else if (view === wifiButton) {
+        //else if (view === wifiButton) {
 
 
             // stopping the service
-            startActivity(Intent(this@MainActivity, WIFINetListActivity::class.java))
+        //    startActivity(Intent(this@MainActivity, WIFINetListActivity::class.java))
             //stopService(Intent(this, HelloService::class.java))
 
             // just used for faster Wifi Direct testing
-        } else if (view === wifiDirectButton) {
+        else if (view === wifiDirectButton) {
             if (!hasPermissions()) {
                 Log.e("WIFI_DIRECT", "Missing Wi-Fi Direct permissions")
                 return
